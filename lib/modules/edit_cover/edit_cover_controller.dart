@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart' as img;
@@ -9,7 +8,6 @@ import '../create_article/create_article_controller.dart';
 
 enum AspectRatioType { original, square, fourToOne, threeToFour, sixteenToNine }
 
-// UPDATED: Added new filter presets
 enum FilterPreset {
   none,
   dual,
@@ -17,10 +15,10 @@ enum FilterPreset {
   film,
   vintage,
   warm,
-  studio,   // NEW
-  prime,    // NEW
-  classic,  // NEW
-  edge      // NEW
+  studio,
+  prime,
+  classic,
+  edge
 }
 
 class EditCoverController extends GetxController {
@@ -102,7 +100,7 @@ class EditCoverController extends GetxController {
       'Reset',
       'Crop settings have been reset',
       snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.grey.withOpacity(0.8),
+      backgroundColor: Colors.grey.withValues(alpha: 0.8),
       colorText: Colors.white,
       duration: const Duration(seconds: 1),
     );
@@ -117,7 +115,7 @@ class EditCoverController extends GetxController {
       'Reset',
       'Adjust settings have been reset',
       snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.grey.withOpacity(0.8),
+      backgroundColor: Colors.grey.withValues(alpha: 0.8),
       colorText: Colors.white,
       duration: const Duration(seconds: 1),
     );
@@ -140,7 +138,7 @@ class EditCoverController extends GetxController {
       'Reset',
       'All changes have been reset',
       snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.grey.withOpacity(0.8),
+      backgroundColor: Colors.grey.withValues(alpha: 0.8),
       colorText: Colors.white,
       duration: const Duration(seconds: 1),
     );
@@ -250,7 +248,7 @@ class EditCoverController extends GetxController {
           'Info',
           'No changes made',
           snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.grey.withOpacity(0.8),
+          backgroundColor: Colors.grey.withValues(alpha: 0.8),
           colorText: Colors.white,
           duration: const Duration(seconds: 1),
         );
@@ -272,15 +270,11 @@ class EditCoverController extends GetxController {
 
       print('Decoded image: ${image.width}x${image.height}');
 
-      // Apply transformations in order
-
-      // 1. 90-degree rotations
       if (rotation90Deg.value != 0) {
         print('Applying 90-degree rotation: ${rotation90Deg.value}');
         image = img.copyRotate(image, angle: rotation90Deg.value);
       }
 
-      // 2. Straighten (small angle rotation)
       if (straightenAngle.value != 0) {
         print('Applying straighten: ${straightenAngle.value}');
         image = img.copyRotate(image, angle: straightenAngle.value);
@@ -306,20 +300,14 @@ class EditCoverController extends GetxController {
 
       // 5. Apply filter preset
       if (selectedFilter.value != FilterPreset.none) {
-        print('Applying filter: ${selectedFilter.value}');
-        image = _applyFilterOptimized(image, selectedFilter.value);
+        image = _applyFilterPreset(image, selectedFilter.value);
       }
 
       // 6. Apply brightness, contrast, saturation
       if (brightness.value != 0 || contrast.value != 0 || saturation.value != 0) {
+        image = _applyAdjustments(image,brightness.value,contrast.value,saturation.value);
         print('Applying adjustments - B:${brightness.value}, C:${contrast.value}, S:${saturation.value}');
-
-        image = img.adjustColor(
-          image,
-          brightness: brightness.value / 100,
-          contrast: 1.0 + (contrast.value / 100),
-          saturation: 1.0 + (saturation.value / 100),
-        );
+        //ToDo
       }
 
       print('Final image: ${image.width}x${image.height}');
@@ -358,7 +346,7 @@ class EditCoverController extends GetxController {
           'Success',
           'Image saved successfully',
           snackPosition: SnackPosition.TOP,
-          backgroundColor: const Color(0xFFFF0A8C).withOpacity(0.9),
+          backgroundColor: const Color(0xFFFF0A8C).withValues(alpha: 0.9),
           colorText: Colors.white,
           duration: const Duration(seconds: 1),
         );
@@ -372,99 +360,33 @@ class EditCoverController extends GetxController {
         'Error',
         'Failed to save image: $e',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.withOpacity(0.7),
+        backgroundColor: Colors.red.withValues(alpha: 0.7),
         colorText: Colors.white,
       );
     }
   }
 
-  // UPDATED: Apply filter with new presets
-  img.Image _applyFilterOptimized(img.Image image, FilterPreset preset) {
-    switch (preset) {
+  img.Image _applyFilterPreset(img.Image image, FilterPreset filter) {
+    switch (filter) {
       case FilterPreset.dual:
-      // Cool blue tones
-        return img.adjustColor(
-          image,
-          brightness: 0.05,
-          contrast: 1.1,
-          saturation: 1.2,
-        );
-
+        return _applyDualToneFilter(image);
       case FilterPreset.neon:
-      // Bright vibrant
-        return img.adjustColor(
-          image,
-          brightness: 0.1,
-          contrast: 1.25,
-          saturation: 1.4,
-        );
-
+        return _applyNeonFilter(image);
       case FilterPreset.film:
-      // Warm vintage look
-        return img.adjustColor(
-          image,
-          brightness: 0.08,
-          contrast: 0.95,
-          saturation: 0.85,
-        );
-
+        return _applyFilmFilter(image);
       case FilterPreset.vintage:
-      // Aged photo
-        return img.adjustColor(
-          image,
-          brightness: 0.12,
-          contrast: 0.9,
-          saturation: 0.75,
-        );
-
+        return _applyVintageFilter(image);
       case FilterPreset.warm:
-      // Orange-golden tones
-        return img.adjustColor(
-          image,
-          brightness: 0.05,
-          contrast: 1.05,
-          saturation: 1.15,
-        );
-
-    // NEW FILTERS
+        return _applyWarmFilter(image);
       case FilterPreset.studio:
-      // Professional studio look - clean, slightly desaturated, higher contrast
-        return img.adjustColor(
-          image,
-          brightness: 0.03,
-          contrast: 1.15,
-          saturation: 0.92,
-        );
-
+        return _applyStudioFilter(image);
       case FilterPreset.prime:
-      // Premium look - warm tones, slightly brighter, enhanced
-        return img.adjustColor(
-          image,
-          brightness: 0.08,
-          contrast: 1.12,
-          saturation: 1.18,
-        );
-
+        return _applyPrimeFilter(image);
       case FilterPreset.classic:
-      // Classic film look - muted colors, balanced, timeless
-        return img.adjustColor(
-          image,
-          brightness: 0.04,
-          contrast: 0.98,
-          saturation: 0.88,
-        );
-
+        return _applyClassicFilter(image);
       case FilterPreset.edge:
-      // Sharp and edgy - high contrast, saturated colors, dramatic
-        return img.adjustColor(
-          image,
-          brightness: 0.02,
-          contrast: 1.3,
-          saturation: 1.35,
-        );
-
+        return _applyEdgeFilter(image);
       case FilterPreset.none:
-      default:
         return image;
     }
   }
@@ -514,7 +436,6 @@ class EditCoverController extends GetxController {
     }
   }
 
-  // UPDATED: ColorFilter for preview with new filters
   ColorFilter? getColorFilter() {
     switch (selectedFilter.value) {
       case FilterPreset.dual:
@@ -611,5 +532,236 @@ class EditCoverController extends GetxController {
       0, 0, c * s, 0, b * 255,
       0, 0, 0, 1, 0,
     ]);
+  }
+
+  img.Image _applyAdjustments(img.Image image, double brightness, double contrast, double saturation) {
+    // Clone the image
+    final adjusted = img.copyResize(image, width: image.width, height: image.height);
+
+    final b = brightness / 100.0;
+    final c = contrast / 100.0;
+    final s = saturation / 100.0;
+
+    for (var y = 0; y < adjusted.height; y++) {
+      for (var x = 0; x < adjusted.width; x++) {
+        final pixel = adjusted.getPixel(x, y);
+        final r = pixel.r.toDouble();
+        final g = pixel.g.toDouble();
+        final bv = pixel.b.toDouble();
+        final a = pixel.a.toDouble();
+
+        var newR = r + (b * 255);
+        var newG = g + (b * 255);
+        var newB = bv + (b * 255);
+
+        newR = ((newR - 128) * (1 + c)) + 128;
+        newG = ((newG - 128) * (1 + c)) + 128;
+        newB = ((newB - 128) * (1 + c)) + 128;
+
+        if (s != 0) {
+          final luminance = 0.299 * newR + 0.587 * newG + 0.114 * newB;
+          newR = luminance + (newR - luminance) * (1 + s);
+          newG = luminance + (newG - luminance) * (1 + s);
+          newB = luminance + (newB - luminance) * (1 + s);
+        }
+
+        newR = newR.clamp(0, 255);
+        newG = newG.clamp(0, 255);
+        newB = newB.clamp(0, 255);
+
+        adjusted.setPixelRgba(x, y, newR.round(), newG.round(), newB.round(), a.round());
+      }
+    }
+
+    return adjusted;
+  }
+
+  img.Image _applyDualToneFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+
+        final newR = (r * 1.2).clamp(0, 255).round();
+        final newB = (b * 1.2).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, g, newB, a);
+      }
+    }
+
+    return filtered;
+  }
+
+  img.Image _applyNeonFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+        final newR = (r * 1.5).clamp(0, 255).round();
+        final newB = (b * 1.5).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, g, newB, a);
+      }
+    }
+
+    return filtered;
+  }
+
+  img.Image _applyFilmFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+
+        // Desaturate slightly and add sepia tint
+        final newR = (r * 0.9 + 20).clamp(0, 255).round();
+        final newG = (g * 0.9 + 20).clamp(0, 255).round();
+        final newB = (b * 0.8 + 20).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, newG, newB, a);
+      }
+    }
+    return filtered;
+  }
+
+  img.Image _applyVintageFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+
+        final newR = (r * 0.9 + 30).clamp(0, 255).round();
+        final newG = (g * 0.85 + 20).clamp(0, 255).round();
+        final newB = (b * 0.7 + 10).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, newG, newB, a);
+      }
+    }
+    return filtered;
+  }
+
+  img.Image _applyWarmFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+
+        final newR = (r * 1.2).clamp(0, 255).round();
+        final newB = (b * 0.8).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, g, newB, a);
+      }
+    }
+    return filtered;
+  }
+
+  img.Image _applyStudioFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+
+        final newR = (r * 1.15 + 8).clamp(0, 255).round();
+        final newG = (g * 1.15 + 8).clamp(0, 255).round();
+        final newB = (b * 1.15 + 8).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, newG, newB, a);
+      }
+    }
+
+    return filtered;
+  }
+
+  img.Image _applyPrimeFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+        final newR = (r * 1.18 + 20).clamp(0, 255).round();
+        final newG = (g * 1.12 + 20).clamp(0, 255).round();
+        final newB = (b * 1.05 + 20).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, newG, newB, a);
+      }
+    }
+
+    return filtered;
+  }
+
+  img.Image _applyClassicFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+        final newR = (r * 0.98 + 10).clamp(0, 255).round();
+        final newG = (g * 0.98 + 10).clamp(0, 255).round();
+        final newB = (b * 0.95 + 10).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, newG, newB, a);
+      }
+    }
+
+    return filtered;
+  }
+
+  img.Image _applyEdgeFilter(img.Image image) {
+    final filtered = img.copyResize(image, width: image.width, height: image.height);
+
+    for (var y = 0; y < filtered.height; y++) {
+      for (var x = 0; x < filtered.width; x++) {
+        final pixel = filtered.getPixel(x, y);
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        final a = pixel.a;
+        final newR = (r * 1.35 + 5).clamp(0, 255).round();
+        final newG = (g * 1.35 + 5).clamp(0, 255).round();
+        final newB = (b * 1.35 + 5).clamp(0, 255).round();
+
+        filtered.setPixelRgba(x, y, newR, newG, newB, a);
+      }
+    }
+
+    return filtered;
   }
 }
