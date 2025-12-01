@@ -1,0 +1,41 @@
+name: article_creator
+description: A Flutter article creation app with media editing
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management & Navigation
+  get: ^4.6.6
+  
+  # Media Handling
+  image_picker: ^1.0.7
+  video_player: ^2.8.2
+  chewie: ^1.7.5
+  
+  # Rich Text Editor
+  flutter_quill: ^11.5.0
+  
+  # File & Path Handling
+  path_provider: ^2.1.2
+  path: ^1.8.3
+  
+  # Image Processing
+  image: ^4.1.7
+  extended_image: ^8.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.10
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
